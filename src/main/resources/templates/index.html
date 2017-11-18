@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html  lang="en" xmlns:th="http://www.w3.org/1999/xhtml" xmlns:layout="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1"/>
+    <script th:src="@{https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.min.js}"></script>
+    <script th:src="@{/js/trip-planner.js}"></script>
+    <link rel="stylesheet" th:href="@{https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css}"/>
+    <script th:src="@{https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js}"></script>
+    <script th:src="@{https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js}"></script>
+    <title>Trip Planner</title>
+</head>
+<body ng-app = "tripPlannerApp" ng-controller = "tripPlannerCtrl">
+<div class="container">
+    <h3 ng-if="message">{{message}}</h3>
+    <h2>Provide travel info here</h2>
+    <form class="form-horizontal" ng-submit="submitRequest('/get-travel-plan')">
+        <div class="form-group">
+            <label class="control-label col-sm-2" for="departureStop">departure stop:</label>
+            <div class="col-sm-10">
+                <input type="text" class="form-control" ng-model="travelPlan.departureStop" stopId="departureStop" placeholder="Enter departure" name="departureStop"/>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-sm-2" for="arrivalStop">Arrival stop:</label>
+            <div class="col-sm-10">
+                <input type="text" class="form-control" ng-model="travelPlan.arrivalStop" stopId="arrivalStop" placeholder="Enter arrival" name="arrivalStop"/>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-sm-2" for="dateAndTime">date and time:</label>
+            <div class="col-sm-10">
+                <input type="text" class="form-control" ng-model="travelPlan.dateAndTime" stopId="dateAndTime" placeholder="Enter date and time (yyyy-MM-dd:hh-mm format)" name="dateAndTime"/>
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-sm-offset-2 col-sm-10">
+                <button type="submit" class="btn btn-default">Submit</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+
+</body>
+</html>
