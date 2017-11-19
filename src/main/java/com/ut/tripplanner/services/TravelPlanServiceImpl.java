@@ -5,11 +5,12 @@ import com.ut.tripplanner.domain.RouteStopMapping;
 import com.ut.tripplanner.domain.Stop;
 import com.ut.tripplanner.domain.StopConnection;
 import com.ut.tripplanner.enums.ScheduleDay;
-import com.ut.tripplanner.model.NextStopDistance;
 import com.ut.tripplanner.model.PreviousNodeDetails;
 import com.ut.tripplanner.repository.RouteStopMappingRepository;
 import com.ut.tripplanner.repository.StopConnectionRepository;
 import com.ut.tripplanner.repository.StopRepository;
+import com.ut.tripplanner.utils.Libs;
+import com.ut.tripplanner.utils.SortByTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -36,33 +37,35 @@ public class TravelPlanServiceImpl implements TravelPlanService {
             return;
         }
 
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(date);
-        ScheduleDay scheduleDay = ScheduleDay.values()[calendar.get(Calendar.DAY_OF_WEEK) - 1];
-        String minute = calendar.get(Calendar.MINUTE) < 10 ? "0"+calendar.get(Calendar.MINUTE) : ""+calendar.get(Calendar.MINUTE);
-        int timeInHourAndMinute = Integer.parseInt("" + calendar.get(Calendar.HOUR_OF_DAY) + minute);
+        ScheduleDay scheduleDay = Libs.getScheduleDay(date);
+        int timeInHourAndMinute = Libs.getTimeInHourMinuteFormat(date);
+
         List<Map<Stop, PreviousNodeDetails>> costingMapList = new ArrayList<>();
         for (Stop startStop : startStops) {
             for (Stop endStop : endStops) {
-                Map<Stop, PreviousNodeDetails> costingMap = findShortestPath(startStop, endStop, scheduleDay, timeInHourAndMinute);
+                Map<Stop, PreviousNodeDetails> costingMap = findShortestPath(startStop,
+                        endStop, scheduleDay, timeInHourAndMinute);
                 costingMapList.add(costingMap);
             }
         }
     }
 
-    private Map<Stop, PreviousNodeDetails> findShortestPath(Stop startStop, Stop endStop, ScheduleDay scheduleDay, int timeInHourAndMinute) {
+    private Map<Stop, PreviousNodeDetails> findShortestPath(Stop startStop,
+                                                            Stop endStop,
+                                                            ScheduleDay scheduleDay,
+                                                            int timeInHourAndMinute) {
 
-        Map<Stop, PreviousNodeDetails> costingMap = new HashMap<>();
+        Map<Stop, PreviousNodeDetails> costMap = new HashMap<>();
         List<Stop> allStops = stopRepository.findAll();
         for (Stop stop : allStops) {
             if (stop.equals(startStop)) {
                 PreviousNodeDetails previousNodeDetails = new PreviousNodeDetails();
                 previousNodeDetails.setCost(timeInHourAndMinute);
-                costingMap.put(stop, previousNodeDetails);
+                costMap.put(stop, previousNodeDetails);
             } else {
                 PreviousNodeDetails previousNodeDetails = new PreviousNodeDetails();
                 previousNodeDetails.setCost(Integer.MAX_VALUE);
-                costingMap.put(stop, previousNodeDetails);
+                costMap.put(stop, previousNodeDetails);
             }
         }
         Set<Stop> unvisitedNodes = new HashSet<>();
@@ -71,17 +74,18 @@ public class TravelPlanServiceImpl implements TravelPlanService {
         }
 
         while (!unvisitedNodes.isEmpty()) {
-            Stop smalestStop = takeSmallestCostStopFromUnvisited(unvisitedNodes, costingMap);
-            unvisitedNodes.remove(smalestStop);
-            if (smalestStop.equals(endStop)) {
+            Stop lowestCostStop = takeSmallestCostStopFromUnvisited(unvisitedNodes, costMap);
+            unvisitedNodes.remove(lowestCostStop);
+            if (lowestCostStop.equals(endStop)) {
                 break;
             }
-            findSmallestDistanceNextStop(smalestStop, scheduleDay, costingMap.get(smalestStop).getCost(), costingMap);
+            calculateDistanceOfNextStops(lowestCostStop, scheduleDay, costMap.get(lowestCostStop).getCost(), costMap);
         }
-        return costingMap;
+        return costMap;
     }
 
-    private Stop takeSmallestCostStopFromUnvisited(Set<Stop> unvisited, Map<Stop, PreviousNodeDetails> map) {
+    private Stop takeSmallestCostStopFromUnvisited(Set<Stop> unvisited,
+                                                   Map<Stop, PreviousNodeDetails> map) {
         int smallestDistance = Integer.MAX_VALUE;
         Stop smallestDistanceStop = new Stop();
         for (Stop stop : unvisited) {
@@ -93,73 +97,57 @@ public class TravelPlanServiceImpl implements TravelPlanService {
         return smallestDistanceStop;
     }
 
-    private void findSmallestDistanceNextStop(Stop stop, ScheduleDay scheduleDay, int currentTime, Map<Stop, PreviousNodeDetails> stopMap) {
+    private void calculateDistanceOfNextStops(Stop stop, ScheduleDay scheduleDay,
+                                              int currentTime,
+                                              Map<Stop, PreviousNodeDetails> costMap) {
 
-        List<RouteStopMapping> routeStopMappings = routeStopMappingRepository.findByStop(stop);
-        if (routeStopMappings.size() < 1) {
+        List<RouteStopMapping> belongsToRoutes = routeStopMappingRepository.findByStop(stop);
+        if (belongsToRoutes.size() < 1) {
             return ;
         }
-        for (RouteStopMapping routeStopMapping : routeStopMappings) {
-            List<RouteStopMapping> nextNodeMappingList = routeStopMappingRepository.findByRouteOrderBySequence(routeStopMapping.getRoute());
-            boolean check = false;
-            int localTimeDistance = 0;
-            boolean isFirst = true;
+        for (RouteStopMapping routeStopMapping : belongsToRoutes) {
+            List<RouteStopMapping> nextStopMappingList = routeStopMappingRepository
+                    .findByRouteOrderBySequence(routeStopMapping.getRoute());
+            boolean isNextFound = false;
+            int totalDistanceFromRouteStartStop = 0;
+            boolean ignoreConnection = true;
             Stop previousStop = new Stop();
-            boolean isDone = false;
-            for (RouteStopMapping routeStopMapping1 : nextNodeMappingList) {
+            for (RouteStopMapping nextStopMapping : nextStopMappingList) {
                 StopConnection stopConnection=null;
-                if (!isFirst) {
-                    stopConnection = stopConnectionRepository.findByPreviousStopAndNextStop(previousStop, routeStopMapping1.getStop());
+                if (!ignoreConnection) {
+                    stopConnection = stopConnectionRepository
+                            .findByPreviousStopAndNextStop(previousStop, nextStopMapping.getStop());
                     if (stopConnection != null) {
-                        localTimeDistance += stopConnection.getConnectionDuration();
+                        totalDistanceFromRouteStartStop += stopConnection.getConnectionDuration();
                     }
                 }
-                if (check && localTimeDistance != 0) {
-                    List<RouteStartTime> routeStartTimes = routeStopMapping1.getRoute().getRouteStart().getStartTimes();
+                if (isNextFound && totalDistanceFromRouteStartStop != 0) {
+                    List<RouteStartTime> routeStartTimes = nextStopMapping.getRoute().getRouteStart().getStartTimes();
                     Collections.sort(routeStartTimes, new SortByTime());
                     for (RouteStartTime routeStartTime : routeStartTimes) {
-                        if (scheduleDay == routeStartTime.getScheduleDay() && currentTime <= sum(routeStartTime.getTime(),
-                                localTimeDistance - stopConnection.getConnectionDuration())
-                                && sum(routeStartTime.getTime(), localTimeDistance) < stopMap.get(routeStopMapping1.getStop()).getCost()) {
-                            PreviousNodeDetails previousNodeDetails = stopMap.get(routeStopMapping1.getStop());
-                            previousNodeDetails.setCost(sum(routeStartTime.getTime(), localTimeDistance));
-                            previousNodeDetails.setRoute(routeStopMapping1.getRoute());
+                        if (scheduleDay == routeStartTime.getScheduleDay() && currentTime <= Libs.addTime(routeStartTime.getTime(),
+                                totalDistanceFromRouteStartStop - stopConnection.getConnectionDuration())
+                                && Libs.addTime(routeStartTime.getTime(), totalDistanceFromRouteStartStop) < costMap.get(nextStopMapping.getStop()).getCost()) {
+                            PreviousNodeDetails previousNodeDetails = costMap.get(nextStopMapping.getStop());
+                            previousNodeDetails.setCost(Libs.addTime(routeStartTime.getTime(), totalDistanceFromRouteStartStop));
+                            previousNodeDetails.setRoute(nextStopMapping.getRoute());
                             previousNodeDetails.setTravelTime(stopConnection.getConnectionDuration());
                             previousNodeDetails.setStop(stop);
                             break;
                         }
                     }
-                    isDone = true;
                 }
-                if(isDone){
+                if(isNextFound){
                     break;
                 }
-                if (routeStopMapping1.getStop().equals(stop)) {
-                    check = true;
+                if (nextStopMapping.getStop().equals(stop)) {
+                    isNextFound = true;
                 }else{
-                    check = false;
+                    isNextFound = false;
                 }
-                isFirst = false;
-                previousStop = routeStopMapping1.getStop();
+                ignoreConnection = false;
+                previousStop = nextStopMapping.getStop();
             }
-        }
-    }
-
-    private int sum(int formatedTime, int plainTime) {
-        System.out.println("formated time: " + formatedTime + " plaintime: " + plainTime);
-        int formatedTime2 = plainTime;
-        if (plainTime >= 60) {
-            formatedTime2 = (plainTime / 60) * 100 + plainTime % 60;
-        }
-        int remainderOne = formatedTime % 100;
-        int remainderTwo = formatedTime2 % 100;
-        if (remainderOne + remainderTwo >= 60) {
-            int returnValue = (formatedTime / 100 + formatedTime2 / 100 + (remainderOne + remainderTwo) / 60) * 100 + (remainderOne + remainderTwo) % 60;
-            System.out.println("returnValue: " + returnValue);
-            return returnValue;
-        } else {
-            System.out.println("returnValue: " + (formatedTime + formatedTime2));
-            return formatedTime + formatedTime2;
         }
     }
 

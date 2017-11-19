@@ -1,4 +1,4 @@
-package com.ut.tripplanner.services;
+package com.ut.tripplanner.utils;
 
 import com.ut.tripplanner.domain.RouteStartTime;
 
