@@ -34,7 +34,6 @@ public class TripController {
 
     @RequestMapping(value = "test", method = RequestMethod.GET)
     public void test() throws IOException{
-        TravelPlan travelPlan = travelPlanService.findTravelPlan(58.35693622, 26.67881727, 58.34306837, 26.73000933, new Date());
-        System.out.println(travelPlan);
+        travelPlanService.insertIntoConnection();
     }
 }

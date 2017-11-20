@@ -1,14 +1,12 @@
 package com.ut.tripplanner.services;
 
-import com.ut.tripplanner.domain.RouteStartTime;
-import com.ut.tripplanner.domain.RouteStopMapping;
-import com.ut.tripplanner.domain.Stop;
-import com.ut.tripplanner.domain.StopConnection;
+import com.ut.tripplanner.domain.*;
 import com.ut.tripplanner.enums.ScheduleDay;
 import com.ut.tripplanner.enums.Transport;
 import com.ut.tripplanner.model.PathDetails;
 import com.ut.tripplanner.model.TravelLeg;
 import com.ut.tripplanner.model.TravelPlan;
+import com.ut.tripplanner.repository.RouteRepository;
 import com.ut.tripplanner.repository.RouteStopMappingRepository;
 import com.ut.tripplanner.repository.StopConnectionRepository;
 import com.ut.tripplanner.repository.StopRepository;
@@ -31,6 +29,9 @@ public class TravelPlanServiceImpl implements TravelPlanService {
 
     @Autowired
     private RouteStopMappingRepository routeStopMappingRepository;
+
+    @Autowired
+    private RouteRepository routeRepository;
 
     @Override
     public TravelPlan findTravelPlan(double startLat, double startLong, double endLat, double endLong, Date date) {
@@ -168,7 +169,7 @@ public class TravelPlanServiceImpl implements TravelPlanService {
         for (Stop unvisited : unvisitedStops) {
             double distanceBetweenLowest = Libs.distance(lowestCostStop.getxCoord(), lowestCostStop.getyCoord(),
                     unvisited.getxCoord(), unvisited.getyCoord());
-            int requiredTime = (int) (distanceBetweenLowest / Constants.walkingSpeed);
+            int requiredTime = (int)Math.ceil(distanceBetweenLowest / Constants.walkingSpeed);
             if (Libs.addTime(costMap.get(lowestCostStop).getCost(), requiredTime) < costMap.get(unvisited).getCost()) {
                 PathDetails pathDetails = costMap.get(unvisited);
                 pathDetails.setTransport(Transport.ON_FOOT);
@@ -244,6 +245,31 @@ public class TravelPlanServiceImpl implements TravelPlanService {
             }
         }
         return false;
+    }
+
+    public void insertIntoConnection(){
+
+        Random random = new Random();
+        random.nextInt();
+
+        List<Route> routes = routeRepository.findAll();
+        for(Route route: routes){
+            List<RouteStopMapping> routeStopMappings = routeStopMappingRepository.findByRouteOrderBySequence(route);
+            Stop previous = routeStopMappings.get(0).getStop();
+            for(RouteStopMapping routeStopMapping: routeStopMappings){
+                if(routeStopMapping.getSequence() != 1){
+                    StopConnection stopConnection = stopConnectionRepository.findByPreviousStopAndNextStop(previous, routeStopMapping.getStop());
+                    if(stopConnection == null){
+                        stopConnection = new StopConnection();
+                        stopConnection.setPreviousStop(previous);
+                        stopConnection.setNextStop(routeStopMapping.getStop());
+                        stopConnection.setConnectionDuration((int )(Math.random() * 6 + 1));
+                        stopConnectionRepository.saveAndFlush(stopConnection);
+                    }
+                    previous = routeStopMapping.getStop();
+                }
+            }
+        }
     }
 
 }
