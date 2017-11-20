@@ -10,6 +10,5 @@ import java.util.List;
 public interface RouteStopMappingRepository extends JpaRepository<RouteStopMapping, Long> {
 
     List<RouteStopMapping> findByStop(Stop stop);
-    RouteStopMapping findByRouteAndSequence(Route route, Integer seq);
     List<RouteStopMapping> findByRouteOrderBySequence(Route route);
 }

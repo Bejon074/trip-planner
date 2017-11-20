@@ -8,6 +8,5 @@ import java.util.List;
 
 public interface StopConnectionRepository extends JpaRepository<StopConnection, Long> {
 
-    List<StopConnection> findByPreviousStop(Stop previousStop);
     StopConnection findByPreviousStopAndNextStop(Stop previousStop, Stop nextStop);
 }
