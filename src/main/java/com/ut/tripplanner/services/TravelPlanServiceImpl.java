@@ -69,16 +69,14 @@ public class TravelPlanServiceImpl implements TravelPlanService {
         for (Stop stop : allStops) {
             unvisitedNodes.add(stop);
         }
-        Set<Stop> visitedStops = new HashSet<>();
 
         while (!unvisitedNodes.isEmpty()) {
             Stop smalestStop = takeSmallestCostStopFromUnvisited(unvisitedNodes, costingMap);
+            unvisitedNodes.remove(smalestStop);
             if (smalestStop.equals(endStop)) {
                 break;
             }
             findSmallestDistanceNextStop(smalestStop, scheduleDay, costingMap.get(smalestStop).getCost(), costingMap);
-            unvisitedNodes.remove(smalestStop);
-            visitedStops.add(smalestStop);
         }
         return costingMap;
     }
@@ -107,10 +105,11 @@ public class TravelPlanServiceImpl implements TravelPlanService {
             int localTimeDistance = 0;
             boolean isFirst = true;
             Stop previousStop = new Stop();
+            boolean isDone = false;
             for (RouteStopMapping routeStopMapping1 : nextNodeMappingList) {
+                StopConnection stopConnection=null;
                 if (!isFirst) {
-                    StopConnection stopConnection = stopConnectionRepository.findByPreviousStopAndNextStop(previousStop, routeStopMapping1.getStop());
-                    System.out.println("database inconsistency 1");
+                    stopConnection = stopConnectionRepository.findByPreviousStopAndNextStop(previousStop, routeStopMapping1.getStop());
                     if (stopConnection != null) {
                         localTimeDistance += stopConnection.getConnectionDuration();
                     }
@@ -119,18 +118,26 @@ public class TravelPlanServiceImpl implements TravelPlanService {
                     List<RouteStartTime> routeStartTimes = routeStopMapping1.getRoute().getRouteStart().getStartTimes();
                     Collections.sort(routeStartTimes, new SortByTime());
                     for (RouteStartTime routeStartTime : routeStartTimes) {
-                        if (scheduleDay == routeStartTime.getScheduleDay() && currentTime < sum(routeStartTime.getTime(), localTimeDistance)
-                                && stopMap.get(previousStop).getCost() + localTimeDistance < stopMap.get(routeStopMapping1.getStop()).getCost()) {
+                        if (scheduleDay == routeStartTime.getScheduleDay() && currentTime <= sum(routeStartTime.getTime(),
+                                localTimeDistance - stopConnection.getConnectionDuration())
+                                && sum(routeStartTime.getTime(), localTimeDistance) < stopMap.get(routeStopMapping1.getStop()).getCost()) {
                             PreviousNodeDetails previousNodeDetails = stopMap.get(routeStopMapping1.getStop());
                             previousNodeDetails.setCost(sum(routeStartTime.getTime(), localTimeDistance));
                             previousNodeDetails.setRoute(routeStopMapping1.getRoute());
-                            previousNodeDetails.setStop(previousStop);
-                            check = false;
+                            previousNodeDetails.setTravelTime(stopConnection.getConnectionDuration());
+                            previousNodeDetails.setStop(stop);
+                            break;
                         }
                     }
+                    isDone = true;
                 }
-                if (routeStopMapping.getStop().equals(stop)) {
+                if(isDone){
+                    break;
+                }
+                if (routeStopMapping1.getStop().equals(stop)) {
                     check = true;
+                }else{
+                    check = false;
                 }
                 isFirst = false;
                 previousStop = routeStopMapping1.getStop();
@@ -151,7 +158,7 @@ public class TravelPlanServiceImpl implements TravelPlanService {
             System.out.println("returnValue: " + returnValue);
             return returnValue;
         } else {
-            System.out.println("returnValue: " + formatedTime + formatedTime2);
+            System.out.println("returnValue: " + (formatedTime + formatedTime2));
             return formatedTime + formatedTime2;
         }
     }

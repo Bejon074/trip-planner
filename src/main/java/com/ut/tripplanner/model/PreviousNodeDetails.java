@@ -8,6 +8,7 @@ public class PreviousNodeDetails {
     private int cost;
     private Stop stop;
     private Route route;
+    private int travelTime;
 
     public int getCost() {
         return cost;
@@ -33,12 +34,21 @@ public class PreviousNodeDetails {
         this.route = route;
     }
 
+    public int getTravelTime() {
+        return travelTime;
+    }
+
+    public void setTravelTime(int travelTime) {
+        this.travelTime = travelTime;
+    }
+
     @Override
     public String toString() {
         return "PreviousNodeDetails{" +
                 "cost=" + cost +
                 ", stop=" + stop +
                 ", route=" + route +
+                ", travelTime=" + travelTime +
                 '}';
     }
 }
