@@ -8,14 +8,15 @@ angular.module('tripPlannerApp', [])
             $http({
                 method : 'post',
                 url : url,
-                data : $scope.travelPlan
+                data : $scope.travelPlanRequest
             })
                 .then(function (response) {
                     console.log(response.data)
-                    $scope.message = response.data.message;
+                    $scope.tripPlan = response.data
                 }),
                 function errorCallBack (response) {
                     $scope.message = "Error in the server"
+                    $scope.tripPlan = null
                 }
         }
     })

@@ -1,8 +1,10 @@
 package com.ut.tripplanner.services;
 
+import com.ut.tripplanner.model.TravelPlan;
+
 import java.util.Date;
 
 public interface TravelPlanService {
 
-    void findTravelPlan(String startStopName, String endStopName, Date date);
+    TravelPlan findTravelPlan(double startLat, double startLong, double endLat, double endLong, Date date);
 }

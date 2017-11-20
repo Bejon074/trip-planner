@@ -1,40 +1,55 @@
 package com.ut.tripplanner.model;
 
+import com.ut.tripplanner.domain.Location;
+
+import java.util.Date;
+import java.util.List;
+
 public class TravelPlan {
-    private String departureStop;
-    private String arrivalStop;
-    private String dateAndTime;
+    private Location departure;
+    private Location arrival;
+    private Date depTime;
+    private List<TravelLeg> travelLegs;
 
-    public String getDepartureStop() {
-        return departureStop;
+    public Location getDeparture() {
+        return departure;
     }
 
-    public void setDepartureStop(String departureStop) {
-        this.departureStop = departureStop;
+    public void setDeparture(Location departure) {
+        this.departure = departure;
     }
 
-    public String getArrivalStop() {
-        return arrivalStop;
+    public Location getArrival() {
+        return arrival;
     }
 
-    public void setArrivalStop(String arrivalStop) {
-        this.arrivalStop = arrivalStop;
+    public void setArrival(Location arrival) {
+        this.arrival = arrival;
     }
 
-    public String getDateAndTime() {
-        return dateAndTime;
+    public Date getDepTime() {
+        return depTime;
     }
 
-    public void setDateAndTime(String dateAndTime) {
-        this.dateAndTime = dateAndTime;
+    public void setDepTime(Date depTime) {
+        this.depTime = depTime;
+    }
+
+    public List<TravelLeg> getTravelLegs() {
+        return travelLegs;
+    }
+
+    public void setTravelLegs(List<TravelLeg> travelLegs) {
+        this.travelLegs = travelLegs;
     }
 
     @Override
     public String toString() {
         return "TravelPlan{" +
-                "departureStop='" + departureStop + '\'' +
-                ", arrivalStop='" + arrivalStop + '\'' +
-                ", dateAndTime='" + dateAndTime + '\'' +
+                "departure=" + departure +
+                ", arrival=" + arrival +
+                ", depTime=" + depTime +
+                ", travelLegs=" + travelLegs +
                 '}';
     }
 }

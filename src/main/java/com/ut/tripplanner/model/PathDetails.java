@@ -2,13 +2,15 @@ package com.ut.tripplanner.model;
 
 import com.ut.tripplanner.domain.Route;
 import com.ut.tripplanner.domain.Stop;
+import com.ut.tripplanner.enums.Transport;
 
-public class PreviousNodeDetails {
+public class PathDetails {
 
     private int cost;
-    private Stop stop;
+    private Stop previousStop;
     private Route route;
     private int travelTime;
+    private Transport transport;
 
     public int getCost() {
         return cost;
@@ -18,12 +20,12 @@ public class PreviousNodeDetails {
         this.cost = cost;
     }
 
-    public Stop getStop() {
-        return stop;
+    public Stop getPreviousStop() {
+        return previousStop;
     }
 
-    public void setStop(Stop stop) {
-        this.stop = stop;
+    public void setPreviousStop(Stop previousStop) {
+        this.previousStop = previousStop;
     }
 
     public Route getRoute() {
@@ -42,13 +44,22 @@ public class PreviousNodeDetails {
         this.travelTime = travelTime;
     }
 
+    public Transport getTransport() {
+        return transport;
+    }
+
+    public void setTransport(Transport transport) {
+        this.transport = transport;
+    }
+
     @Override
     public String toString() {
-        return "PreviousNodeDetails{" +
+        return "PathDetails{" +
                 "cost=" + cost +
-                ", stop=" + stop +
+                ", previousStop=" + previousStop +
                 ", route=" + route +
                 ", travelTime=" + travelTime +
+                ", transport=" + transport +
                 '}';
     }
 }

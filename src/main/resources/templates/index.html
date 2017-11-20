@@ -15,21 +15,33 @@
     <h2>Provide travel info here</h2>
     <form class="form-horizontal" ng-submit="submitRequest('/get-travel-plan')">
         <div class="form-group">
-            <label class="control-label col-sm-2" for="departureStop">departure stop:</label>
+            <label class="control-label col-sm-2" for="startLat">departure lat:</label>
             <div class="col-sm-10">
-                <input type="text" class="form-control" ng-model="travelPlan.departureStop" stopId="departureStop" placeholder="Enter departure" name="departureStop"/>
+                <input type="text" class="form-control" ng-model="travelPlanRequest.startLat" id="startLat" placeholder="Enter departure lat" name="startLat"/>
             </div>
         </div>
         <div class="form-group">
-            <label class="control-label col-sm-2" for="arrivalStop">Arrival stop:</label>
+            <label class="control-label col-sm-2" for="startLong">departure long:</label>
             <div class="col-sm-10">
-                <input type="text" class="form-control" ng-model="travelPlan.arrivalStop" stopId="arrivalStop" placeholder="Enter arrival" name="arrivalStop"/>
+                <input type="text" class="form-control" ng-model="travelPlanRequest.startLong" id="startLong" placeholder="Enter departure long" name="startLong"/>
             </div>
         </div>
         <div class="form-group">
-            <label class="control-label col-sm-2" for="dateAndTime">date and time:</label>
+            <label class="control-label col-sm-2" for="endLat">Arrival lat:</label>
             <div class="col-sm-10">
-                <input type="text" class="form-control" ng-model="travelPlan.dateAndTime" stopId="dateAndTime" placeholder="Enter date and time (yyyy-MM-dd:hh-mm format)" name="dateAndTime"/>
+                <input type="text" class="form-control" ng-model="travelPlanRequest.endLat" id="endLat" placeholder="Enter arrival lat" name="endLat"/>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-sm-2" for="endLong">Arrival long:</label>
+            <div class="col-sm-10">
+                <input type="text" class="form-control" ng-model="travelPlanRequest.endLong" id="endLong" placeholder="Enter arrival long" name="endLong"/>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label col-sm-2" for="date">date and time:</label>
+            <div class="col-sm-10">
+                <input type="text" class="form-control" ng-model="travelPlanRequest.dateString" id="date" placeholder="Enter date and time (yyyy-MM-dd,hh:mm format)" name="date"/>
             </div>
         </div>
         <div class="form-group">
@@ -38,6 +50,18 @@
             </div>
         </div>
     </form>
+</div>
+
+<div ng-show="tripPlan">
+    <p>Travel Legs</p>
+    <ul ng-repeat="x in tripPlan.travelLegs">
+        <li >duration: {{ x.duration}}</li>
+        <li >transport Type: {{ x.transport}}</li>
+        <li >path: {{ x.path}}</li>
+        <li >rounteNumber: {{ x.routeNumber}}</li>
+        <li >startTimeL {{ x.startTime}}</li>
+        <li >endTime: {{ x.endTime}}</li>
+    </ul>
 </div>
 
 
