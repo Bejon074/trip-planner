@@ -36,14 +36,14 @@ public class TravelPlanServiceImpl implements TravelPlanService {
     public TravelPlan findTravelPlan(double startLat, double startLong, double endLat, double endLong, Date date) {
 
         Stop startStop = new Stop();
-        startStop.setStopName("startStop");
+        startStop.setStopName("startPoint");
         startStop.setStopId(-1L);
         startStop.setxCoord(startLat);
         startStop.setyCoord(startLong);
 
 
         Stop endStop = new Stop();
-        endStop.setStopName("endStop");
+        endStop.setStopName("endPoint");
         endStop.setStopId(-2L);
         endStop.setxCoord(endLat);
         endStop.setyCoord(endLong);
@@ -127,6 +127,7 @@ public class TravelPlanServiceImpl implements TravelPlanService {
                 if (!ignoreConnection) {
                     stopConnection = stopConnectionRepository
                             .findByPreviousStopAndNextStop(previousStop, nextStopMapping.getStop());
+                    System.out.println("connection between stop "+previousStop + " to stop "+nextStopMapping.getStop());
                     if (stopConnection != null) {
                         totalDistanceFromRouteStartStop += stopConnection.getConnectionDuration();
                     }
@@ -136,7 +137,7 @@ public class TravelPlanServiceImpl implements TravelPlanService {
                     Collections.sort(routeStartTimes, new SortByTime());
                     for (RouteStartTime routeStartTime : routeStartTimes) {
                         if (scheduleDay == routeStartTime.getScheduleDay() && currentTime <= Libs.addTime(routeStartTime.getTime(),
-                                totalDistanceFromRouteStartStop - stopConnection.getConnectionDuration())
+                                totalDistanceFromRouteStartStop - (stopConnection.getConnectionDuration()))
                                 && Libs.addTime(routeStartTime.getTime(), totalDistanceFromRouteStartStop) < costMap.get(nextStopMapping.getStop()).getCost()) {
                             PathDetails pathDetails = costMap.get(nextStopMapping.getStop());
                             pathDetails.setCost(Libs.addTime(routeStartTime.getTime(), totalDistanceFromRouteStartStop));
