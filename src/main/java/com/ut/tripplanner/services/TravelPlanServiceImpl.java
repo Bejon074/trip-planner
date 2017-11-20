@@ -6,7 +6,6 @@ import com.ut.tripplanner.enums.Transport;
 import com.ut.tripplanner.model.PathDetails;
 import com.ut.tripplanner.model.TravelLeg;
 import com.ut.tripplanner.model.TravelPlan;
-import com.ut.tripplanner.repository.RouteRepository;
 import com.ut.tripplanner.repository.RouteStopMappingRepository;
 import com.ut.tripplanner.repository.StopConnectionRepository;
 import com.ut.tripplanner.repository.StopRepository;
@@ -30,24 +29,14 @@ public class TravelPlanServiceImpl implements TravelPlanService {
     @Autowired
     private RouteStopMappingRepository routeStopMappingRepository;
 
-    @Autowired
-    private RouteRepository routeRepository;
 
     @Override
     public TravelPlan findTravelPlan(double startLat, double startLong, double endLat, double endLong, Date date) {
 
-        Stop startStop = new Stop();
-        startStop.setStopName("startPoint");
-        startStop.setStopId(-1L);
-        startStop.setxCoord(startLat);
-        startStop.setyCoord(startLong);
+        Stop startStop = buildStop(startLat, startLong, "startPoint", -1L);
 
 
-        Stop endStop = new Stop();
-        endStop.setStopName("endPoint");
-        endStop.setStopId(-2L);
-        endStop.setxCoord(endLat);
-        endStop.setyCoord(endLong);
+        Stop endStop = buildStop(endLat, endLong, "endPoint", -2L);
 
         ScheduleDay scheduleDay = Libs.getScheduleDay(date);
         int timeInHourAndMinute = Libs.getTimeInHourMinuteFormat(date);
@@ -55,6 +44,15 @@ public class TravelPlanServiceImpl implements TravelPlanService {
         Map<Stop, PathDetails> costingMap = findShortestPath(startStop, endStop, scheduleDay, timeInHourAndMinute);
         TravelPlan travelPlan = generateTravelPlan(costingMap, startStop, endStop, date);
         return travelPlan;
+    }
+
+    private Stop buildStop(double startLat, double startLong, String startPoint, long stopId) {
+        Stop startStop = new Stop();
+        startStop.setStopName(startPoint);
+        startStop.setStopId(stopId);
+        startStop.setxCoord(startLat);
+        startStop.setyCoord(startLong);
+        return startStop;
     }
 
 
@@ -245,31 +243,6 @@ public class TravelPlanServiceImpl implements TravelPlanService {
             }
         }
         return false;
-    }
-
-    public void insertIntoConnection(){
-
-        Random random = new Random();
-        random.nextInt();
-
-        List<Route> routes = routeRepository.findAll();
-        for(Route route: routes){
-            List<RouteStopMapping> routeStopMappings = routeStopMappingRepository.findByRouteOrderBySequence(route);
-            Stop previous = routeStopMappings.get(0).getStop();
-            for(RouteStopMapping routeStopMapping: routeStopMappings){
-                if(routeStopMapping.getSequence() != 1){
-                    StopConnection stopConnection = stopConnectionRepository.findByPreviousStopAndNextStop(previous, routeStopMapping.getStop());
-                    if(stopConnection == null){
-                        stopConnection = new StopConnection();
-                        stopConnection.setPreviousStop(previous);
-                        stopConnection.setNextStop(routeStopMapping.getStop());
-                        stopConnection.setConnectionDuration((int )(Math.random() * 6 + 1));
-                        stopConnectionRepository.saveAndFlush(stopConnection);
-                    }
-                    previous = routeStopMapping.getStop();
-                }
-            }
-        }
     }
 
 }

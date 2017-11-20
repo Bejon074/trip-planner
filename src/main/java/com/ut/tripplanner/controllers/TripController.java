@@ -22,9 +22,8 @@ public class TripController {
 
     @RequestMapping(value = "/get-travel-plan", method = RequestMethod.POST)
     public TravelPlan getTravelLeg(@RequestBody TravelPlanRequest travelPlanRequest) throws ParseException {
-        DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd,HH:mm:ss");
-        Date date = formatter.parse(travelPlanRequest.getDateString() + ":00");
-        System.out.println(date);
+
+        Date date = generateDate(travelPlanRequest.getDateString());
         return travelPlanService.findTravelPlan(travelPlanRequest.getStartLat(),
                 travelPlanRequest.getStartLong(),
                 travelPlanRequest.getEndLat(),
@@ -32,8 +31,8 @@ public class TripController {
                 date);
     }
 
-    @RequestMapping(value = "test", method = RequestMethod.GET)
-    public void test() throws IOException{
-        travelPlanService.insertIntoConnection();
+    private Date generateDate(String dateString) throws ParseException{
+        DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd,HH:mm:ss");
+        return formatter.parse(dateString + ":00");
     }
 }
